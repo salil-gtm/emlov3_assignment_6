@@ -1,4 +1,3 @@
-import os
 import warnings
 from importlib.util import find_spec
 from typing import Callable

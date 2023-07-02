@@ -7,6 +7,12 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
+import mlflow
+import os
+import mlflow.pytorch
+from mlflow import MlflowClient
+from lightning.pytorch.loggers.mlflow import MLFlowLogger
+
 from adamantium import utils
 
 log = utils.get_pylogger(__name__)
@@ -71,7 +77,30 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
 
     train_metrics = trainer.callback_metrics
 
-    metric_dict = {**train_metrics}
+    if cfg.get("test"):
+        log.info("Starting testing!")
+        ckpt_path = trainer.checkpoint_callback.best_model_path
+        if ckpt_path == "":
+            log.warning("Best ckpt not found! Using current weights for testing...")
+            ckpt_path = None
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+        log.info(f"Best ckpt path: {ckpt_path}")
+
+        for logger_ in logger:
+            if isinstance(logger_, MLFlowLogger):
+                ckpt = torch.load(ckpt_path)
+                model.load_state_dict(ckpt["state_dict"])
+                os.environ["MLFLOW_RUN_ID"] = logger_.run_id
+                os.environ["MLFLOW_EXPERIMENT_ID"] = logger_.experiment_id
+                os.environ["MLFLOW_EXPERIMENT_NAME"] = logger_._experiment_name
+                os.environ["MLFLOW_TRACKING_URI"] = logger_._tracking_uri
+                mlflow.pytorch.log_model(model, "model")
+                break
+
+    test_metrics = trainer.callback_metrics
+
+    # merge train and test metrics
+    metric_dict = {**train_metrics, **test_metrics}
 
     return metric_dict, object_dict
 
