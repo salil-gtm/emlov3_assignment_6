@@ -74,16 +74,16 @@ docker exec -it -w /workspace/logs/mlflow adamantium-container mlflow ui --host 
 ## Results
 
 ### MLFlow Runs
-![multirun](assests/mlflow-multirun.png)
+![multirun](assets/mlflow-multirun.png)
 
 ### patch_size vs val/acc
-![comparison](assests/comparison_scatterplot.png)
+![comparison](assets/comparison_scatterplot.png)
 
 ### Artifact Structure
-![artifact](assests/artifact_structure.png)
+![artifact](assets/artifact_structure.png)
 
 ### Logs Structure
-![logs](assests/logs_structure.png)
+![logs](assets/logs_structure.png)
 
 ## Past Documentation
 
